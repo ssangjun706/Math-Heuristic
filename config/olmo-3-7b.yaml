@@ -1,5 +1,6 @@
 model_name: allenai/Olmo-3-1025-7B
 local: true
+has_chat_template: false
 
 parameter:
   max_tokens: 16384

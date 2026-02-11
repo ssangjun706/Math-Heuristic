@@ -1,3 +1,4 @@
+import re
 import argparse
 import json
 import os
@@ -31,7 +32,6 @@ def load_yaml(path: Path) -> dict:
 
 
 def load_processed_ids(output_path: Path) -> set[str]:
-    """Load already processed problem_ids from output file."""
     if not output_path.exists():
         return set()
 
@@ -50,12 +50,26 @@ def load_processed_ids(output_path: Path) -> set[str]:
     return processed_ids
 
 
+def extract_reasoning_from_content(content: str) -> tuple[str | None, str]:
+    think_pattern = r"<think>(.*?)</think>"
+    think_matches = re.findall(think_pattern, content, re.DOTALL)
+
+    if think_matches:
+        reasoning = "\n".join(think_matches)
+        clean_content = re.sub(think_pattern, "", content, flags=re.DOTALL).strip()
+        return reasoning, clean_content
+
+    return None, content
+
+    
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", required=True)
     parser.add_argument("--dataset", required=True)
     parser.add_argument("--output-path", required=True)
     parser.add_argument("--config-path", required=True)
+    parser.add_argument("--tp-size", default=1)
+    parser.add_argument("--port", default=65001)
     args = parser.parse_args()
 
     load_dotenv()
@@ -73,19 +87,22 @@ def main() -> None:
     model_parameter = model_config.get("parameter", {})
 
     is_local = model_config.get("local", False)
+    has_chat_template = model_config.get("has_chat_template", True)
 
     if is_local:
+        endpoint = "chat/completions" if has_chat_template else "completions"
         api_base_url = model_config.get(
-            "api_base_url", "http://localhost:65001/v1/chat/completions"
+            "api_base_url", f"http://localhost:{args.port}/v1/{endpoint}"
         )
 
         auto_start = model_config.get("auto_start", True)
         if auto_start:
-            vllm_args = model_config.get("vllm_args", {})
             setup_local_vllm(
                 model_name=model_name,
                 api_base_url=api_base_url,
-                vllm_args=vllm_args,
+                vllm_args={
+                    "tensor-parallel-size": args.tp_size,
+                }
             )
     else:
         api_base_url = model_config.get(
@@ -137,6 +154,16 @@ def main() -> None:
             generated_text = message.get("content", "")
             reasoning = message.get("reasoning", None)
             generated_answer = extract_answer(generated_text)
+
+            if reasoning is None and generated_text:
+                extracted_reasoning, clean_content = extract_reasoning_from_content(
+                    generated_text
+                )
+                if extracted_reasoning:
+                    reasoning = extracted_reasoning
+                    generated_text = clean_content
+
+                    
             is_correct_value = is_correct(
                 {
                     "prediction": generated_answer,

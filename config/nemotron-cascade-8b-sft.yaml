@@ -1,4 +1,4 @@
-model_name: nvidia/Nemotron-Cascade-8B-Thinking
+model_name: nvidia/Nemotron-Cascade-8B-Intermediate-ckpts/Nemotron-Cascade-8B-SFT
 local: true
 
 parameter:

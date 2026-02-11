@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 import requests
 
 
-def check_server_health(url: str, timeout: int = 300) -> bool:
+def check_server_health(url: str, timeout: int = 1000) -> bool:
     """Check if the vLLM server is ready."""
     parsed_url = urlparse(url)
     base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
