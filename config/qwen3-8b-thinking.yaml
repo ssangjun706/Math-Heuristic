@@ -1,0 +1,11 @@
+model_name: qwen/qwen3-8b
+
+parameter:
+  max_tokens: 16384
+  max_completion_tokens: 16384
+  max_output_tokens: 16384
+  enable_thinking: true
+  temperature: 0.6
+  top_p: 0.95
+  top_k: 20
+  min_p: 0

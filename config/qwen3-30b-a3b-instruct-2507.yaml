@@ -1,0 +1,11 @@
+model_name: qwen/qwen3-30b-a3b-instruct-2507
+
+parameter:
+  max_tokens: 16384
+  max_completion_tokens: 16384
+  max_output_tokens: 16384
+  temperature: 0.7
+  top_p: 0.8
+  top_k: 20
+  min_p: 0
+

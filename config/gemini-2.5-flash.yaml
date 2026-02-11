@@ -1,0 +1,8 @@
+model_name: google/gemini-2.5-flash
+parameter:
+  max_tokens: 16384
+  max_completion_tokens: 16384
+  max_output_tokens: 16384
+  reasoning: 
+    effort: medium
+    include_thoughts: true

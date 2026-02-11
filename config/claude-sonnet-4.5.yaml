@@ -1,0 +1,12 @@
+model_name: anthropic/claude-sonnet-4.5
+parameter:
+  max_tokens: 16384
+  max_completion_tokens: 16384
+  max_output_tokens: 16384
+  reasoning:
+    effort: medium
+  thinking:
+    type: enabled
+    budget_tokens: 16384
+  output_config:
+    effort: medium
