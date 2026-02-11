@@ -11,6 +11,7 @@ from tqdm import tqdm
 from evaluation.answer_extraction import extract_answer
 from evaluation.eval_script import is_correct
 from src.format_prompt import PromptFormatter
+from src.vllm_serve import setup_local_vllm
 
 
 def load_jsonl(path: Path) -> list[dict]:
@@ -60,9 +61,6 @@ def main() -> None:
     load_dotenv()
     api_key = os.getenv("OPENROUTER_API_KEY")
 
-    if not api_key:
-        raise ValueError("OPENROUTER_API_KEY not found in environment variables.")
-
     dataset_path = Path(args.dataset)
     output_dir = Path(args.output_path)
 
@@ -73,6 +71,26 @@ def main() -> None:
     model_config = load_yaml(config_path)
     model_name = model_config["model_name"]
     model_parameter = model_config.get("parameter", {})
+
+    is_local = model_config.get("local", False)
+
+    if is_local:
+        api_base_url = model_config.get(
+            "api_base_url", "http://localhost:65001/v1/chat/completions"
+        )
+
+        auto_start = model_config.get("auto_start", True)
+        if auto_start:
+            vllm_args = model_config.get("vllm_args", {})
+            setup_local_vllm(
+                model_name=model_name,
+                api_base_url=api_base_url,
+                vllm_args=vllm_args,
+            )
+    else:
+        api_base_url = model_config.get(
+            "api_base_url", "https://openrouter.ai/api/v1/chat/completions"
+        )
 
     dataset_name = dataset_path.name.split(".jsonl")[0].lower()
     output_path = output_dir / f"{model_name_escaped}_{dataset_name}_result.jsonl"
@@ -95,12 +113,13 @@ def main() -> None:
         messages = formatter.format_prompt(problem)
 
         try:
+            headers = {"Content-Type": "application/json"}
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
+
             response = requests.post(
-                url="https://openrouter.ai/api/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                },
+                url=api_base_url,
+                headers=headers,
                 data=json.dumps(
                     {
                         "model": model_name,

@@ -43,7 +43,12 @@ class PromptFormatter:
         ]
 
     def format_nemotron(self, question: str) -> list[dict]:
-        raise NotImplementedError("Nemotron formatting is not implemented yet.")
+        system_prompt = self._load_system_prompt("NEMOTRON_CASCADE")
+        content = question + " /think"
+        return [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": content},
+        ]
 
     def format_prompt(self, question: str) -> list[dict]:
         model_name = self.model_name.lower()
