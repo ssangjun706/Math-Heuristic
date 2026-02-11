@@ -35,13 +35,12 @@ class PromptFormatter:
         ]
 
     def format_claude(self, question: str) -> list[dict]:
-        system_prompt = self._load_system_prompt("CLAUDE_SONNET_4.5")
-
-        messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": question})
-        return messages
+        # system_prompt = self._load_system_prompt("OLMO_3")
+        content = question
+        return [
+            # {"role": "system", "content": system_prompt},
+            {"role": "user", "content": content},
+        ]
 
     def format_nemotron(self, question: str) -> list[dict]:
         raise NotImplementedError("Nemotron formatting is not implemented yet.")
