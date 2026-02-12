@@ -35,8 +35,11 @@ class PromptFormatter:
         ]
 
     def format_claude(self, question: str) -> list[dict]:
-        # system_prompt = self._load_system_prompt("OLMO_3")
-        content = question
+        # system_prompt = self._load_system_prompt("CLAUDE_SONNET_4.5")
+        content = f"{question}\n"
+        content += (
+            "Please reason step by step, and put your final answer within \boxed{}."
+        )        
         return [
             # {"role": "system", "content": system_prompt},
             {"role": "user", "content": content},
