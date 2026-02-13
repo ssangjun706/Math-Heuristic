@@ -32,9 +32,16 @@ def postprocess_json_file(file_path):
 
     try:
         with open(file_path, "r", encoding="utf-8") as f:
-            file_content = json.load(f)
+            # Check if file is JSONL format
+            if file_path.suffix == ".jsonl":
+                lines = f.readlines()
+                file_content = [
+                    json.loads(line.strip()) for line in lines if line.strip()
+                ]
+            else:
+                file_content = json.load(f)
     except json.JSONDecodeError as e:
-        print(f"  Error: Failed to parse JSON file: {e}")
+        print(f"  Error: Failed to parse JSON/JSONL file: {e}")
         return
     except Exception as e:
         print(f"  Error reading file: {e}")
@@ -158,8 +165,12 @@ def postprocess_json_file(file_path):
 
     # 통계 정보는 출력만 하고 파일에는 저장하지 않음
     # JSON 파일로 쓰기 (메타데이터 없이 problems 배열만 저장)
+    # JSONL은 JSON으로 변환하여 저장
+    output_path = (
+        file_path.with_suffix(".json") if file_path.suffix == ".jsonl" else file_path
+    )
     try:
-        with open(file_path, "w", encoding="utf-8") as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(transformed_data, f, ensure_ascii=False, indent=2)
 
         print(
@@ -168,27 +179,27 @@ def postprocess_json_file(file_path):
         )
         print(f"  ✓ Accuracy: {correct_trials}/{total_trials} = {accuracy:.2f}%")
         print(f"  ✓ Pass@1: {pass_at_1:.2f}%")
-        print(f"  ✓ Updated: {file_path}")
+        print(f"  ✓ Updated: {output_path}")
     except Exception as e:
         print(f"  Error writing file: {e}")
 
 
 def process_all_output_files():
-    """output/ 폴더의 모든 json 파일 후처리"""
+    """output/ 폴더의 모든 json/jsonl 파일 후처리"""
     output_dir = Path("../output")
 
     if not output_dir.exists():
         print(f"Error: output directory not found: {output_dir}")
         return
 
-    # output/ 하위의 모든 json 파일 찾기
-    json_files = list(output_dir.rglob("*.json"))
+    # output/ 하위의 모든 json/jsonl 파일 찾기
+    json_files = list(output_dir.rglob("*.json")) + list(output_dir.rglob("*.jsonl"))
 
     if not json_files:
-        print("No json files found in output/ directory")
+        print("No json/jsonl files found in output/ directory")
         return
 
-    print(f"Found {len(json_files)} json files\n")
+    print(f"Found {len(json_files)} json/jsonl files\n")
 
     # 각 파일 처리
     for file_path in sorted(json_files):
