@@ -19,10 +19,12 @@ export CUDA_VISIBLE_DEVICES="1"
 # MODEL="allenai/olmo-3-7b-think-dpo"
 MODEL="allenai/olmo-3-7b-rl-zero"
 
-DATASET="dataset/test/math_perturb_original.jsonl"
-# DATASET="dataset/test/math_perturb_hard.jsonl"
-CONFIG_PATH="config/"
-OUTPUT_PATH="output/"
+# DATASET="simple"
+# DATASET="hard"
+DATASET="original"
+
+OUTPUT_PATH="./math-heuristics"
+CONFIG_PATH="./config"
 
 TP_SIZE=1
 PORT=65002

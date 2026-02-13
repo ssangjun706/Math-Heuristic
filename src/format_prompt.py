@@ -16,10 +16,10 @@ class PromptFormatter:
     @staticmethod
     def format_deepseek(question: str) -> list[dict]:
         content = question
-        # content = f"{question}\n"
-        # content += (
-        #     "Please reason step by step, and put your final answer within \boxed{}."
-        # )
+        content = f"{question}\n"
+        content += (
+            "Please reason step by step, and put your final answer within \boxed{}."
+        )
         return [{"role": "user", "content": content}]
 
     @staticmethod

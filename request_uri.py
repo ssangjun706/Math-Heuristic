@@ -178,7 +178,12 @@ def process_single_trial(
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, required=True)
-    parser.add_argument("--dataset", type=str, required=True)
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        required=True,
+        choices=["original", "simple", "hard"],
+    )
     parser.add_argument("--output-path", type=str, required=True)
     parser.add_argument("--config-path", type=str, required=True)
     parser.add_argument("--tp-size", type=int, default=1)
@@ -190,8 +195,16 @@ def main():
     load_dotenv()
     api_key = os.getenv("OPENROUTER_API_KEY")
 
-    dataset_path = Path(args.dataset)
-    output_dir = Path(args.output_path)
+    # Dataset type routing
+    dataset_type = args.dataset
+    dataset_path = Path(
+        f"./dataset/test/{dataset_type}/math_perturb_{dataset_type}.jsonl"
+    )
+
+    # Output path with type subdirectory
+    output_base_dir = Path(args.output_path)
+    output_dir = output_base_dir / dataset_type
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     config_dir = Path(args.config_path)
     model_name_escaped = args.model.split("/")[-1].lower()
@@ -224,7 +237,7 @@ def main():
             "api_base_url", "https://openrouter.ai/api/v1/chat/completions"
         )
 
-    dataset_name = dataset_path.name.split(".jsonl")[0].lower()
+    dataset_name = f"math_perturb_{dataset_type}"
     output_path = output_dir / f"{model_name_escaped}_{dataset_name}_result.json"
     problems = load_jsonl(dataset_path)
 
@@ -254,7 +267,7 @@ def main():
         problem_id = problem.get("problem_id")
         current_trial_count = len(results_dict[problem_id].get("trials", []))
 
-        for trial_n in range(current_trial_count, args.rollout):
+        for trial_n in range(current_trial_count + 1, args.rollout + 1):
             trials_to_process.append((problem, trial_n))
 
     total_trials = len(problems) * args.rollout

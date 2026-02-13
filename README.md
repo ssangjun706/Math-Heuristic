@@ -12,7 +12,6 @@
 | API   | Qwen3-235B-A22B-Thinking-2507 | ✓        | ✗    | ✓    |
 | API   | Qwen3-30B-A3B-Instruct-2507   | ✓        | ✗    | ✓    |
 | API   | Qwen3-30B-A3B-Thinking-2507   | ✓        | ✗    | ✓    |
-| API   | OLMo-3-7B-Think-RLVR          | ✓        | ✗    | ~    |
 
 ### Local
 
@@ -21,8 +20,9 @@
 | Local | Qwen3-8B (Thinking)     | ✓        | ✗    | ✓    |
 | Local | OLMo-3-7B-Think-DPO     | ✗        | ✗    | ✗    |
 | Local | OLMo-3-7B-Think-SFT     | ✗        | ✗    | ✗    |
-| Local | OLMo-3-RL-Zero          | ✓        | ✗    | ~    |
-| Local | Nemotron-Cascade-8B     | ✗        | ✗    | ✗    |
+| Local | OLMo-3-7B-Think-RLVR    | ✓        | ✗    | ✓    |
+| Local | OLMo-3-RL-Zero          | ✓        | ✗    | ✓    |
+| Local | Nemotron-Cascade-8B     | ✓        | ✗    | ~    |
 | Local | Nemotron-Cascade-8B-SFT | ✗        | ✗    | ✗    |
 
 
