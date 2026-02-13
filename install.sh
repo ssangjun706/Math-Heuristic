@@ -11,3 +11,4 @@ source .venv/bin/activate
 
 uv add dotenv numpy openai pyyaml regex requests sympy tqdm transformers torch
 uv pip install vllm --torch-backend=auto
+uv pip install math-verify[antlr4_13_2]

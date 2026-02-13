@@ -130,7 +130,7 @@ def postprocess_json_file(file_path):
 
 
 def process_all_output_files():
-    output_dir = Path("../output")
+    output_dir = Path("./output")
 
     if not output_dir.exists():
         print(f"Error: output directory not found: {output_dir}")
