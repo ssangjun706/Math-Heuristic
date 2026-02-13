@@ -12,3 +12,4 @@ wheels/
 .venv
 output/
 .env
+math-heuristics
