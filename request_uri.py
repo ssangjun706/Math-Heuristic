@@ -195,13 +195,9 @@ def main():
     load_dotenv()
     api_key = os.getenv("OPENROUTER_API_KEY")
 
-    # Dataset type routing
     dataset_type = args.dataset
-    dataset_path = Path(
-        f"./dataset/test/{dataset_type}/math_perturb_{dataset_type}.jsonl"
-    )
+    dataset_path = Path(f"./dataset/test/math_perturb_{dataset_type}.jsonl")
 
-    # Output path with type subdirectory
     output_base_dir = Path(args.output_path)
     output_dir = output_base_dir / dataset_type
     output_dir.mkdir(parents=True, exist_ok=True)
