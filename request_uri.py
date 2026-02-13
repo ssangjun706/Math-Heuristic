@@ -1,6 +1,7 @@
 import re
 import argparse
 import json
+import logging
 import os
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -11,10 +12,27 @@ import yaml
 from dotenv import load_dotenv
 from tqdm import tqdm
 
-from evaluation.answer_extraction import extract_answer
-from evaluation.eval_script import is_correct
+from math_verify import parse, verify
+
 from src.format_prompt import PromptFormatter
 from src.vllm_serve import setup_local_vllm
+
+
+class NoWarningFilter(logging.Filter):
+    def filter(self, record):
+        return record.levelno != logging.WARNING
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+for handler in logging.root.handlers:
+    handler.addFilter(NoWarningFilter())
+
+logger = logging.getLogger(__name__)
 
 
 def load_jsonl(path: Path) -> list[dict]:
@@ -33,23 +51,30 @@ def load_yaml(path: Path) -> dict:
         return yaml.safe_load(file)
 
 
-def load_processed_ids(output_path: Path) -> set[str]:
+def load_existing_results(output_path: Path) -> dict[str, dict]:
     if not output_path.exists():
-        return set()
+        return {}
 
-    processed_ids: set[str] = set()
-    with output_path.open("r", encoding="utf-8") as file:
-        for line in file:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                data = json.loads(line)
-                if "problem_id" in data:
-                    processed_ids.add(data["problem_id"])
-            except json.JSONDecodeError:
-                continue
-    return processed_ids
+    results: dict[str, dict] = {}
+    try:
+        with output_path.open("r", encoding="utf-8") as file:
+            data = json.load(file)
+
+        if isinstance(data, dict) and "problems" in data:
+            problems = data["problems"]
+        elif isinstance(data, list):
+            problems = data
+        else:
+            return {}
+
+        for problem in problems:
+            if "problem_id" in problem:
+                results[problem["problem_id"]] = problem
+
+    except (json.JSONDecodeError, FileNotFoundError):
+        pass
+
+    return results
 
 
 def extract_reasoning_from_content(content: str) -> tuple[str | None, str]:
@@ -69,19 +94,18 @@ def extract_reasoning_from_content(content: str) -> tuple[str | None, str]:
 
     reasoning = blocks[0].strip()
     clean_content = blocks[-1].strip()
-    
+
     return reasoning, clean_content
 
 
-def process_single_problem(
+def process_single_trial(
     item: dict,
+    trial_n: int,
     formatter: PromptFormatter,
     api_base_url: str,
     model_name: str,
     model_parameter: dict,
     api_key: str | None,
-    output_path: Path,
-    write_lock: Lock,
 ) -> dict | None:
     try:
         problem = item.get("problem", "")
@@ -108,9 +132,17 @@ def process_single_problem(
 
         completion = response.json()
         message = completion["choices"][0]["message"]
+        answer = item.get("answer", "")
         generated_text = message.get("content", "")
         reasoning = message.get("reasoning", None)
-        generated_answer = extract_answer(generated_text)
+
+        try:
+            parsed_answer = parse(f"\\boxed{{{answer}}}", parsing_timeout=None)
+            parsed_generated = parse(generated_text, parsing_timeout=None)
+        except:
+            raise RuntimeError("Parsing error due to timeout or invalid format.")
+
+        generated_answer = str(parsed_generated) if parsed_generated else ""
 
         if reasoning is None and generated_text:
             extracted_reasoning, clean_content = extract_reasoning_from_content(
@@ -120,39 +152,30 @@ def process_single_problem(
                 reasoning = extracted_reasoning
                 generated_text = clean_content
 
-        is_correct_value = is_correct(
-            {
-                "prediction": generated_answer,
-                "answer": str(item.get("answer")),
-            }
+        is_correct_value = verify(
+            parsed_answer,
+            parsed_generated,
+            timeout_seconds=None,
         )
 
-        result = {
-            "problem_id": item.get("problem_id"),
-            "problem": problem,
-            "answer": item.get("answer"),
-            "level": item.get("level"),
-            "type": item.get("type"),
-            "original_split": item.get("original_split"),
+        trial = {
+            "n": trial_n,
             "reasoning": reasoning,
             "generated_text": generated_text,
             "generated_answer": generated_answer,
             "is_correct": is_correct_value,
-            "final_prompt": str(messages),
         }
 
-        with write_lock:
-            with output_path.open("a", encoding="utf-8") as file:
-                file.write(json.dumps(result, ensure_ascii=False) + "\n")
-
-        return result
+        return trial
 
     except Exception as e:
-        print(f"\nError processing query {item.get('problem_id')}: {e}")
+        logging.error(
+            f"Error processing trial {trial_n} for {item.get('problem_id')}: {e}"
+        )
         return None
 
 
-def main() -> None:
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, required=True)
     parser.add_argument("--dataset", type=str, required=True)
@@ -161,6 +184,7 @@ def main() -> None:
     parser.add_argument("--tp-size", type=int, default=1)
     parser.add_argument("--port", type=int, default=65001)
     parser.add_argument("--max-workers", type=int, default=1)
+    parser.add_argument("--rollout", type=int, default=1)
     args = parser.parse_args()
 
     load_dotenv()
@@ -201,61 +225,113 @@ def main() -> None:
         )
 
     dataset_name = dataset_path.name.split(".jsonl")[0].lower()
-    output_path = output_dir / f"{model_name_escaped}_{dataset_name}_result.jsonl"
+    output_path = output_dir / f"{model_name_escaped}_{dataset_name}_result.json"
     problems = load_jsonl(dataset_path)
 
-    processed_ids = load_processed_ids(output_path)
+    existing_results = load_existing_results(output_path)
 
-    problems_to_process = [
-        p for p in problems if p.get("problem_id") not in processed_ids
-    ]
-    print(f"Model: {model_name}")
-    print(f"Dataset: {dataset_name}")
-    print(f"Output: {output_path}")
-    print(f"Found {len(processed_ids)} already processed problems. Skipping them.")
-    print(f"Processing {len(problems_to_process)} problems / {len(problems)} total.")
-    print(f"Using {args.max_workers} parallel workers.")
+    results_dict: dict[str, dict] = {}
+    for problem in problems:
+        problem_id = problem.get("problem_id")
+        if problem_id in existing_results:
+            results_dict[problem_id] = existing_results[problem_id]
+        else:
+            formatter = PromptFormatter(args.model)
+            messages = formatter.format_prompt(problem.get("problem", ""))
+            results_dict[problem_id] = {
+                "problem_id": problem_id,
+                "problem": problem.get("problem", ""),
+                "answer": problem.get("answer"),
+                "level": problem.get("level"),
+                "type": problem.get("type"),
+                "original_split": problem.get("original_split"),
+                "final_prompt": str(messages),
+                "trials": [],
+            }
+
+    trials_to_process = []
+    for problem in problems:
+        problem_id = problem.get("problem_id")
+        current_trial_count = len(results_dict[problem_id].get("trials", []))
+
+        for trial_n in range(current_trial_count, args.rollout):
+            trials_to_process.append((problem, trial_n))
+
+    total_trials = len(problems) * args.rollout
+    completed_trials = total_trials - len(trials_to_process)
+
+    logger = logging.getLogger(__name__)
+    logger.info(f"Model: {model_name}")
+    logger.info(f"Dataset: {dataset_name}")
+    logger.info(f"Output: {output_path}")
+    logger.info(f"Rollout: {args.rollout}")
+    logger.info(f"Total problems: {len(problems)}")
+    logger.info(f"Completed trials: {completed_trials} / {total_trials}")
+    logger.info(f"Remaining trials: {len(trials_to_process)}")
+    logger.info(f"Using {args.max_workers} parallel workers.")
 
     formatter = PromptFormatter(args.model)
-    write_lock = Lock()
+    results_lock = Lock()
 
-    # Process problems in parallel
     with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
-        # Submit all tasks
-        future_to_item = {
+        future_to_trial = {
             executor.submit(
-                process_single_problem,
-                item,
+                process_single_trial,
+                problem,
+                trial_n,
                 formatter,
                 api_base_url,
                 model_name,
                 model_parameter,
                 api_key,
-                output_path,
-                write_lock,
-            ): item
-            for item in problems_to_process
+            ): (problem, trial_n)
+            for problem, trial_n in trials_to_process
         }
 
         try:
-            with tqdm(total=len(problems_to_process)) as pbar:
-                for future in as_completed(future_to_item):
-                    result = future.result()
+            with tqdm(total=len(trials_to_process), desc="Processing trials") as pbar:
+                for future in as_completed(future_to_trial):
+                    problem, trial_n = future_to_trial[future]
+                    problem_id = problem.get("problem_id")
+
+                    trial_result = future.result()
+                    if trial_result:
+                        with results_lock:
+                            results_dict[problem_id]["trials"].append(trial_result)
+
+                            sorted_results = sorted(
+                                results_dict.values(),
+                                key=lambda x: x.get("problem_id", ""),
+                            )
+
+                            for result in sorted_results:
+                                result["trials"] = sorted(
+                                    result["trials"], key=lambda t: t.get("n", 0)
+                                )
+
+                            with output_path.open("w", encoding="utf-8") as file:
+                                json.dump(
+                                    sorted_results, file, ensure_ascii=False, indent=2
+                                )
+
                     pbar.update(1)
         except KeyboardInterrupt:
-            print("\nInterrupted by user. Exiting...")
+            logger.info("Interrupted by user, saving progress...")
             executor.shutdown(wait=False, cancel_futures=True)
+            sorted_results = sorted(
+                results_dict.values(), key=lambda x: x.get("problem_id", "")
+            )
+
+            for result in sorted_results:
+                result["trials"] = sorted(result["trials"], key=lambda t: t.get("n", 0))
+
+            with output_path.open("w", encoding="utf-8") as file:
+                json.dump(sorted_results, file, ensure_ascii=False, indent=2)
+
+            logger.info(f"Progress saved to {output_path}")
             return
 
-    print("Sorting results by problem_id...")
-    if output_path.exists():
-        results = load_jsonl(output_path)
-        results.sort(key=lambda x: x.get("problem_id", ""))
-
-        with output_path.open("w", encoding="utf-8") as file:
-            for result in results:
-                file.write(json.dumps(result, ensure_ascii=False) + "\n")
-        print(f"Results sorted and saved to {output_path}")
+    logger.info(f"All trials completed. Results saved to {output_path}")
 
 
 if __name__ == "__main__":
