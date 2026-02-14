@@ -106,10 +106,14 @@ def process_single_trial(
     model_name: str,
     model_parameter: dict,
     api_key: str | None,
+    has_chat_template: bool,
 ) -> dict | None:
     try:
         problem = item.get("problem", "")
-        messages = formatter.format_prompt(problem)
+        messages = formatter.format_prompt(
+            problem=problem,
+            has_chat_template=has_chat_template,
+        )
 
         headers = {"Content-Type": "application/json"}
         if api_key:
@@ -136,7 +140,6 @@ def process_single_trial(
         generated_text = message.get("content", "")
         reasoning = message.get("reasoning", None)
 
-        # Extract token usage information
         usage = completion.get("usage", {})
         generated_tokens = usage.get("completion_tokens", None)
 
@@ -251,7 +254,10 @@ def main():
             results_dict[problem_id] = existing_results[problem_id]
         else:
             formatter = PromptFormatter(args.model)
-            messages = formatter.format_prompt(problem.get("problem", ""))
+            messages = formatter.format_prompt(
+                problem=problem.get("problem", ""),
+                has_chat_template=has_chat_template,
+            )
             results_dict[problem_id] = {
                 "problem_id": problem_id,
                 "problem": problem.get("problem", ""),
@@ -298,6 +304,7 @@ def main():
                 model_name,
                 model_parameter,
                 api_key,
+                has_chat_template,
             ): (problem, trial_n)
             for problem, trial_n in trials_to_process
         }
