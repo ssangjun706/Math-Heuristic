@@ -245,12 +245,17 @@ def main():
 
         auto_start = model_config.get("auto_start", True)
         if auto_start:
+            vllm_args = {
+                "tensor-parallel-size": args.tp_size,
+            }
+
+            config_vllm_args = model_config.get("vllm_args", {})
+            vllm_args.update(config_vllm_args)
+
             setup_local_vllm(
                 model_name=model_name,
                 api_base_url=api_base_url,
-                vllm_args={
-                    "tensor-parallel-size": args.tp_size,
-                },
+                vllm_args=vllm_args,
             )
     else:
         api_base_url = model_config.get(
