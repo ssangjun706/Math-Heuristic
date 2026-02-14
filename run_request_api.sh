@@ -15,8 +15,8 @@ MODEL="qwen/qwen3-235b-a22b-thinking-2507"
 # MODEL="qwen/qwen3-30b-a3b-instruct-2507"
 # MODEL="allenai/olmo-3-7b-think-rlvr"
 
-DATASET="simple"
-# DATASET="hard"
+# DATASET="simple"
+DATASET="hard"
 # DATASET="original"
 
 OUTPUT_PATH="./output"

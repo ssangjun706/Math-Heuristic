@@ -119,26 +119,42 @@ def process_single_trial(
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"
 
+        # Prepare request payload based on chat template support
+        if has_chat_template:
+            payload = {
+                "model": model_name,
+                "messages": messages,
+                **model_parameter,
+            }
+        else:
+            payload = {
+                "model": model_name,
+                "prompt": messages,
+                **model_parameter,
+            }
+
         response = requests.post(
             url=api_base_url,
             headers=headers,
-            data=json.dumps(
-                {
-                    "model": model_name,
-                    "messages": messages,
-                    **model_parameter,
-                }
-            ),
+            data=json.dumps(payload),
         )
 
         if response.status_code != 200:
             raise RuntimeError(f"{response.status_code}: {response.text}")
 
         completion = response.json()
-        message = completion["choices"][0]["message"]
+
+        # Parse response based on endpoint type
+        if has_chat_template:
+            message = completion["choices"][0]["message"]
+            generated_text = message.get("content", "")
+            reasoning = message.get("reasoning", None)
+        else:
+            # For completion endpoint, response is in 'text' field
+            generated_text = completion["choices"][0].get("text", "")
+            reasoning = None
+
         answer = item.get("answer", "")
-        generated_text = message.get("content", "")
-        reasoning = message.get("reasoning", None)
 
         usage = completion.get("usage", {})
         generated_tokens = usage.get("completion_tokens", None)
