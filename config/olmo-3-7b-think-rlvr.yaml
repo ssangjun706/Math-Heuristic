@@ -1,4 +1,5 @@
-model_name: allenai/olmo-3-7b-think
+model_name: allenai/Olmo-3-7B-Think
+local: true
 
 parameter:
   max_tokens: 16384

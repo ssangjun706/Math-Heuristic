@@ -29,6 +29,7 @@ CONFIG_PATH="./config"
 TP_SIZE=1
 PORT=65002
 MAX_WORKERS=20
+ROLLOUT=1
 
 python request_uri.py \
     --model $MODEL \
@@ -37,5 +38,6 @@ python request_uri.py \
     --config-path $CONFIG_PATH \
     --tp-size $TP_SIZE \
     --port $PORT \
-    --max-workers $MAX_WORKERS 
+    --max-workers $MAX_WORKERS \
+    --rollout $ROLLOUT
 

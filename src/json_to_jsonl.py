@@ -121,7 +121,7 @@ def convert_all_json_files(input_dir="output", output_dir=None):
 
     if output_dir is None:
         # Default: use output/human directory
-        output_path = Path("output") / "human"
+        output_path = Path("./math-heuristics") / "human"
     else:
         output_path = Path(output_dir)
 
@@ -177,4 +177,4 @@ if __name__ == "__main__":
         convert_json_to_jsonl(input_file, output_file)
     else:
         # Batch conversion
-        convert_all_json_files("output")
+        convert_all_json_files("math-heuristics")

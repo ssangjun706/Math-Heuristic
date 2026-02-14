@@ -7,14 +7,17 @@
 
 source .venv/bin/activate
 
-MODEL="deepseek-ai/DeepSeek-V3.2"
-# MODEL="allenai/olmo-3-7b-think-rlvr"
+# MODEL="deepseek-ai/DeepSeek-V3.2"
 # MODEL="anthropic/claude-sonnet-4.5"
 # MODEL="qwen/qwen3-235b-a22b-thinking-2507"
+# MODEL="qwen/qwen3-235b-a22b-instruct-2507"
+# MODEL="qwen/qwen3-30b-a3b-thinking-2507"
+# MODEL="qwen/qwen3-30b-a3b-instruct-2507"
+MODEL="allenai/olmo-3-7b-think-rlvr"
 
-# DATASET="simple"
+DATASET="simple"
 # DATASET="hard"
-DATASET="original"
+# DATASET="original"
 
 OUTPUT_PATH="./math-heuristics"
 CONFIG_PATH="./config"

@@ -136,6 +136,10 @@ def process_single_trial(
         generated_text = message.get("content", "")
         reasoning = message.get("reasoning", None)
 
+        # Extract token usage information
+        usage = completion.get("usage", {})
+        generated_tokens = usage.get("completion_tokens", None)
+
         try:
             parsed_answer = parse(f"\\boxed{{{answer}}}", parsing_timeout=None)
             parsed_generated = parse(generated_text, parsing_timeout=None)
@@ -164,6 +168,7 @@ def process_single_trial(
             "generated_text": generated_text,
             "generated_answer": generated_answer,
             "is_correct": is_correct_value,
+            "generated_tokens": generated_tokens,
         }
 
         return trial
