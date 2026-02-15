@@ -1,5 +1,4 @@
 model_name: qwen/qwen3-8b
-local: true
 
 parameter:
   max_tokens: 16384

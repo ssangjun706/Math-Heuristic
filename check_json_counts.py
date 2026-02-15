@@ -80,6 +80,7 @@ def analyze_json_file(file_path):
 
 def main():
     base_dir = Path("math-heuristics")
+    # base_dir = Path("output")
     folders = ["simple", "hard", "original"]
     expected_count = 115
 

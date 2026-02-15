@@ -9,22 +9,23 @@
 | API   | Claude-Sonnet-4.5             | ✓        | ✗      | ✓    |
 | API   | DeepSeek-V3.2                 | ✓        | ✓      | ✓    |
 | API   | Qwen3-235B-A22B-Instruct-2507 | ✓        | ✓      | ✓    |
-| API   | Qwen3-235B-A22B-Thinking-2507 | ✗        | ✗      | ✗    |
+| API   | Qwen3-235B-A22B-Thinking-2507 | ✓        | ✓      | ✓    |
 | API   | Qwen3-30B-A3B-Instruct-2507   | ✓        | ✓      | ✓    |
 | API   | Qwen3-30B-A3B-Thinking-2507   | ✓        | ✓      | ✓    |
-| API   | Qwen3-8B (Thinking)           | ✗        | ✗      | ✗    |
+| API   | Qwen3-8B (Thinking)           | ✓        | ✓      | ✓    |
 
 
 ### Local
 
 | Type  | Model                   | Original | Simple | Hard |
 |-------|-------------------------|----------|--------|------|
+| Local | OLMo-3-7B-Base          | ✓        | ~      | ✗    |
 | Local | OLMo-3-7B-Think-DPO     | ✓        | ✓      | ✓    |
 | Local | OLMo-3-7B-Think-SFT     | ✓        | ✓      | ✓    |
 | Local | OLMo-3-7B-Think-RLVR    | ✓        | ✓      | ✓    |
 | Local | OLMo-3-RL-Zero          | ✓        | ✓      | ✓    |
 | Local | Nemotron-Cascade-8B     | ✓        | ✓      | ✓    |
-| Local | Nemotron-Cascade-8B-SFT | ✗        | ✗      | ✗    |
+| Local | Nemotron-Cascade-8B-SFT | ✓        | ~      | ✗    |
 
 
 ### N-Rollout (N=128)

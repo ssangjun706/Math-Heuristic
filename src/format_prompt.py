@@ -36,13 +36,18 @@ class PromptFormatter:
         has_chat_template: Optional[bool],
     ) -> list[dict]:
         system_prompt = self._load_system_prompt("OLMO_3")
+
+        if not has_chat_template:
+            content = f"<|im_start|>system\n{system_prompt}\n<|im_end|>\n"
+            content += f"<|im_start|>user\n{problem}\n"
+            content += "Please reason step by step, and put your final answer within \boxed{}.<|im_end|>\n"
+            content += "<|im_start|>assistant\n"
+            return content
+
         content = f"{problem}\n"
         content += (
             "Please reason step by step, and put your final answer within \boxed{}."
         )
-
-        if not has_chat_template:
-            return content
 
         return [
             {"role": "system", "content": system_prompt},
