@@ -25,7 +25,7 @@
 | Local | OLMo-3-7B-Think-RLVR    | ✓        | ✓      | ✓    |
 | Local | OLMo-3-RL-Zero          | ✓        | ✓      | ✓    |
 | Local | Nemotron-Cascade-8B     | ✓        | ✓      | ✓    |
-| Local | Nemotron-Cascade-8B-SFT | ✓        | ~      | ✗    |
+| Local | Nemotron-Cascade-8B-SFT | ✓        | ✓      | ~    |
 
 
 ### N-Rollout (N=128)

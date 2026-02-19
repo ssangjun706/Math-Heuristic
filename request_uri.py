@@ -290,16 +290,10 @@ def main():
                 "trials": [],
             }
 
-    trials_to_process = []
-    for problem in problems:
-        problem_id = problem.get("problem_id")
-        current_trial_count = len(results_dict[problem_id].get("trials", []))
-
-        for trial_n in range(current_trial_count + 1, args.rollout + 1):
-            trials_to_process.append((problem, trial_n))
-
     total_trials = len(problems) * args.rollout
-    completed_trials = total_trials - len(trials_to_process)
+    already_done = sum(
+        len(results_dict[p.get("problem_id")].get("trials", [])) for p in problems
+    )
 
     logger = logging.getLogger(__name__)
     logger.info(f"Model: {model_name}")
@@ -307,71 +301,79 @@ def main():
     logger.info(f"Output: {output_path}")
     logger.info(f"Rollout: {args.rollout}")
     logger.info(f"Total problems: {len(problems)}")
-    logger.info(f"Completed trials: {completed_trials} / {total_trials}")
-    logger.info(f"Remaining trials: {len(trials_to_process)}")
+    logger.info(f"Completed trials: {already_done} / {total_trials}")
+    logger.info(f"Remaining trials: {total_trials - already_done}")
     logger.info(f"Using {args.max_workers} parallel workers.")
 
     formatter = PromptFormatter(args.model)
     results_lock = Lock()
 
-    with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
-        future_to_trial = {
-            executor.submit(
-                process_single_trial,
-                problem,
-                trial_n,
-                formatter,
-                api_base_url,
-                model_name,
-                model_parameter,
-                api_key,
-                has_chat_template,
-            ): (problem, trial_n)
-            for problem, trial_n in trials_to_process
-        }
+    def save_results():
+        sorted_results = sorted(
+            results_dict.values(), key=lambda x: x.get("problem_id", "")
+        )
+        for result in sorted_results:
+            result["trials"] = sorted(result["trials"], key=lambda t: t.get("n", 0))
+        with output_path.open("w", encoding="utf-8") as file:
+            json.dump(sorted_results, file, ensure_ascii=False, indent=2)
 
-        try:
-            with tqdm(total=len(trials_to_process), desc="Processing trials") as pbar:
-                for future in as_completed(future_to_trial):
-                    problem, trial_n = future_to_trial[future]
-                    problem_id = problem.get("problem_id")
+    for sweep in range(1, args.rollout + 1):
+        sweep_problems = [
+            (problem, sweep)
+            for problem in problems
+            if len(results_dict[problem.get("problem_id")].get("trials", [])) < sweep
+        ]
 
-                    trial_result = future.result()
-                    if trial_result:
-                        with results_lock:
-                            results_dict[problem_id]["trials"].append(trial_result)
+        if not sweep_problems:
+            logger.info(f"Sweep {sweep}/{args.rollout}: already complete, skipping.")
+            continue
 
-                            sorted_results = sorted(
-                                results_dict.values(),
-                                key=lambda x: x.get("problem_id", ""),
-                            )
+        logger.info(
+            f"Sweep {sweep}/{args.rollout}: processing {len(sweep_problems)} problems."
+        )
 
-                            for result in sorted_results:
-                                result["trials"] = sorted(
-                                    result["trials"], key=lambda t: t.get("n", 0)
-                                )
+        with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
+            future_to_trial = {
+                executor.submit(
+                    process_single_trial,
+                    problem,
+                    trial_n,
+                    formatter,
+                    api_base_url,
+                    model_name,
+                    model_parameter,
+                    api_key,
+                    has_chat_template,
+                ): (problem, trial_n)
+                for problem, trial_n in sweep_problems
+            }
 
-                            with output_path.open("w", encoding="utf-8") as file:
-                                json.dump(
-                                    sorted_results, file, ensure_ascii=False, indent=2
-                                )
+            try:
+                with tqdm(
+                    total=len(sweep_problems),
+                    desc=f"Sweep {sweep}/{args.rollout}",
+                ) as pbar:
+                    for future in as_completed(future_to_trial):
+                        problem, trial_n = future_to_trial[future]
+                        problem_id = problem.get("problem_id")
 
-                    pbar.update(1)
-        except KeyboardInterrupt:
-            logger.info("Interrupted by user, saving progress...")
-            executor.shutdown(wait=False, cancel_futures=True)
-            sorted_results = sorted(
-                results_dict.values(), key=lambda x: x.get("problem_id", "")
-            )
+                        trial_result = future.result()
+                        if trial_result:
+                            with results_lock:
+                                results_dict[problem_id]["trials"].append(trial_result)
 
-            for result in sorted_results:
-                result["trials"] = sorted(result["trials"], key=lambda t: t.get("n", 0))
+                        pbar.update(1)
+            except KeyboardInterrupt:
+                logger.info("Interrupted by user, saving progress...")
+                executor.shutdown(wait=False, cancel_futures=True)
+                save_results()
+                logger.info(f"Progress saved to {output_path}")
+                return
 
-            with output_path.open("w", encoding="utf-8") as file:
-                json.dump(sorted_results, file, ensure_ascii=False, indent=2)
-
-            logger.info(f"Progress saved to {output_path}")
-            return
+        save_results()
+        logger.info(
+            f"Sweep {sweep}/{args.rollout} complete. Results saved to {output_path}"
+        )
 
     logger.info(f"All trials completed. Results saved to {output_path}")
 
