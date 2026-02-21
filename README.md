@@ -19,35 +19,20 @@
 
 | Type  | Model                   | Original | Simple | Hard |
 |-------|-------------------------|----------|--------|------|
-| Local | OLMo-3-7B-Base          | ✓        | ~      | ✗    |
+| Local | OLMo-3-7B-Base          | ✓        | ✓      | ~    |
 | Local | OLMo-3-7B-Think-DPO     | ✓        | ✓      | ✓    |
 | Local | OLMo-3-7B-Think-SFT     | ✓        | ✓      | ✓    |
 | Local | OLMo-3-7B-Think-RLVR    | ✓        | ✓      | ✓    |
 | Local | OLMo-3-RL-Zero          | ✓        | ✓      | ✓    |
 | Local | Nemotron-Cascade-8B     | ✓        | ✓      | ✓    |
-| Local | Nemotron-Cascade-8B-SFT | ✓        | ✓      | ~    |
+| Local | Nemotron-Cascade-8B-SFT | ✓        | ✓      | ✓    |
+| Local | Qwen3-8B-Base           | ✓        | ~      | ✗    |
 
-
-### N-Rollout (N=128)
-
-| Type  | Model                   | Original | Simple | Hard |
-|-------|-------------------------|----------|--------|------|
-| Local | OLMo-3-7B-Think-DPO     | ✗        | ✗      | ✗    |
-| Local | OLMo-3-7B-Think-SFT     | ✗        | ✗      | ✗    |
-| Local | OLMo-3-7B-Think-RLVR    | ~        | ✗      | ✗    |
-| Local | OLMo-3-RL-Zero          | ✗        | ✗      | ✗    |
-| Local | Nemotron-Cascade-8B     | ✗        | ✗      | ✗    |
-| Local | Nemotron-Cascade-8B-SFT | ✗        | ✗      | ✗    |
 
 
 #### Legend:
 - ✓ Completed
 - ~ In Progress
 - ✗ Not Started
-
-
-## TODO
-
-- [ ] Pass@K Sampling (k=128)
 
 

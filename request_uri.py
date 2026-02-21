@@ -361,6 +361,7 @@ def main():
                         if trial_result:
                             with results_lock:
                                 results_dict[problem_id]["trials"].append(trial_result)
+                                save_results()  # trial 처리 후 즉시 저장
 
                         pbar.update(1)
             except KeyboardInterrupt:

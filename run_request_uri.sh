@@ -2,31 +2,30 @@
 
 set -e
 
-module load gcc/15.2.0
-module load cuda/12.9.1
+# module load gcc/15.2.0
+# module load cuda/12.9.1
 
 source .venv/bin/activate
 
-export HF_HOME="/scratch/x3326a26/.cache/hf_hub"
-export HF_HUB_CACHE="/scratch/x3326a26/.cache/hf_hub"
-export TRANSFORMERS_CACHE="/scratch/x3326a26/.cache/transformers"
 export HF_TOKEN="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"
-export CUDA_VISIBLE_DEVICES="1"
+export CUDA_VISIBLE_DEVICES="0,1"
 
+MODEL="qwen/qwen3-8b-base"
 # MODEL="nvidia/nemotron-cascade-8b"
 # MODEL="nvidia/nemotron-cascade-8b-sft"
 # MODEL="allenai/olmo-3-7b-think-sft"
 # MODEL="allenai/olmo-3-7b-think-dpo"
-MODEL="allenai/olmo-3-7b-rl-zero"
+# MODEL="allenai/olmo-3-7b-rl-zero"
 
 # DATASET="simple"
 # DATASET="hard"
 DATASET="original"
 
-OUTPUT_PATH="./math-heuristics"
+# OUTPUT_PATH="./math-heuristics"
+OUTPUT_PATH="./output"
 CONFIG_PATH="./config"
 
-TP_SIZE=1
+TP_SIZE=2
 PORT=65002
 MAX_WORKERS=20
 ROLLOUT=1

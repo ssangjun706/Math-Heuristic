@@ -9,11 +9,11 @@ source .venv/bin/activate
 
 # MODEL="deepseek-ai/DeepSeek-V3.2"
 # MODEL="anthropic/claude-sonnet-4.5"
-# MODEL="qwen/qwen3-235b-a22b-thinking-2507"
+MODEL="qwen/qwen3-235b-a22b-thinking-2507"
 # MODEL="qwen/qwen3-235b-a22b-instruct-2507"
 # MODEL="qwen/qwen3-30b-a3b-thinking-2507"
 # MODEL="qwen/qwen3-30b-a3b-instruct-2507"
-MODEL="qwen/qwen3-8b-thinking"
+# MODEL="qwen/qwen3-8b-thinking"
 # MODEL="allenai/olmo-3-7b-think-rlvr"
 
 # DATASET="simple"
