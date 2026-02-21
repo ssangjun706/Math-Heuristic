@@ -317,6 +317,11 @@ def main():
         with output_path.open("w", encoding="utf-8") as file:
             json.dump(sorted_results, file, ensure_ascii=False, indent=2)
 
+    # sweep 시작 시점에 파일이 없으면 빈 파일 생성
+    if not output_path.exists():
+        with output_path.open("w", encoding="utf-8") as file:
+            json.dump([], file, ensure_ascii=False, indent=2)
+
     for sweep in range(1, args.rollout + 1):
         sweep_problems = [
             (problem, sweep)
@@ -358,10 +363,10 @@ def main():
                         problem_id = problem.get("problem_id")
 
                         trial_result = future.result()
-                        if trial_result:
-                            with results_lock:
+                        with results_lock:
+                            if trial_result:
                                 results_dict[problem_id]["trials"].append(trial_result)
-                                save_results()  # trial 처리 후 즉시 저장
+                            save_results()  # trial 처리 후 항상 저장
 
                         pbar.update(1)
             except KeyboardInterrupt:

@@ -26,7 +26,7 @@
 | Local | OLMo-3-RL-Zero          | ✓        | ✓      | ✓    |
 | Local | Nemotron-Cascade-8B     | ✓        | ✓      | ✓    |
 | Local | Nemotron-Cascade-8B-SFT | ✓        | ✓      | ✓    |
-| Local | Qwen3-8B-Base           | ✓        | ~      | ✗    |
+| Local | Qwen3-8B-Base           | ✓        | ✓      | ✓    |
 
 
 
