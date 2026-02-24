@@ -242,21 +242,6 @@ def main():
         api_base_url = model_config.get(
             "api_base_url", f"http://localhost:{args.port}/v1/{endpoint}"
         )
-
-        auto_start = model_config.get("auto_start", True)
-        if auto_start:
-            vllm_args = {
-                "tensor-parallel-size": args.tp_size,
-            }
-
-            config_vllm_args = model_config.get("vllm_args", {})
-            vllm_args.update(config_vllm_args)
-
-            setup_local_vllm(
-                model_name=model_name,
-                api_base_url=api_base_url,
-                vllm_args=vllm_args,
-            )
     else:
         api_base_url = model_config.get(
             "api_base_url", "https://openrouter.ai/api/v1/chat/completions"
@@ -305,6 +290,25 @@ def main():
     logger.info(f"Remaining trials: {total_trials - already_done}")
     logger.info(f"Using {args.max_workers} parallel workers.")
 
+    if already_done >= total_trials:
+        logger.info("All trials already completed. Exiting without loading model.")
+        return
+
+    if is_local:
+        auto_start = model_config.get("auto_start", True)
+        if auto_start:
+            vllm_args = {
+                "tensor-parallel-size": args.tp_size,
+            }
+            config_vllm_args = model_config.get("vllm_args", {})
+            vllm_args.update(config_vllm_args)
+
+            setup_local_vllm(
+                model_name=model_name,
+                api_base_url=api_base_url,
+                vllm_args=vllm_args,
+            )
+
     formatter = PromptFormatter(args.model)
     results_lock = Lock()
 
@@ -322,65 +326,57 @@ def main():
         with output_path.open("w", encoding="utf-8") as file:
             json.dump([], file, ensure_ascii=False, indent=2)
 
-    for sweep in range(1, args.rollout + 1):
-        sweep_problems = [
-            (problem, sweep)
-            for problem in problems
-            if len(results_dict[problem.get("problem_id")].get("trials", [])) < sweep
-        ]
+    # 각 problem별로 아직 부족한 trial을 한 번에 수집 (sweep 루프 불필요)
+    pending_jobs: list[tuple[dict, int]] = []
+    for problem in problems:
+        problem_id = problem.get("problem_id")
+        done = len(results_dict[problem_id].get("trials", []))
+        for trial_n in range(done + 1, args.rollout + 1):
+            pending_jobs.append((problem, trial_n))
 
-        if not sweep_problems:
-            logger.info(f"Sweep {sweep}/{args.rollout}: already complete, skipping.")
-            continue
+    if not pending_jobs:
+        logger.info("All trials already completed. Nothing to do.")
+        return
 
-        logger.info(
-            f"Sweep {sweep}/{args.rollout}: processing {len(sweep_problems)} problems."
-        )
+    logger.info(f"Pending trials: {len(pending_jobs)}")
 
-        with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
-            future_to_trial = {
-                executor.submit(
-                    process_single_trial,
-                    problem,
-                    trial_n,
-                    formatter,
-                    api_base_url,
-                    model_name,
-                    model_parameter,
-                    api_key,
-                    has_chat_template,
-                ): (problem, trial_n)
-                for problem, trial_n in sweep_problems
-            }
+    with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
+        future_to_trial = {
+            executor.submit(
+                process_single_trial,
+                problem,
+                trial_n,
+                formatter,
+                api_base_url,
+                model_name,
+                model_parameter,
+                api_key,
+                has_chat_template,
+            ): (problem, trial_n)
+            for problem, trial_n in pending_jobs
+        }
 
-            try:
-                with tqdm(
-                    total=len(sweep_problems),
-                    desc=f"Sweep {sweep}/{args.rollout}",
-                ) as pbar:
-                    for future in as_completed(future_to_trial):
-                        problem, trial_n = future_to_trial[future]
-                        problem_id = problem.get("problem_id")
+        try:
+            with tqdm(total=len(pending_jobs), desc="Trials") as pbar:
+                for future in as_completed(future_to_trial):
+                    problem, trial_n = future_to_trial[future]
+                    problem_id = problem.get("problem_id")
 
-                        trial_result = future.result()
-                        with results_lock:
-                            if trial_result:
-                                results_dict[problem_id]["trials"].append(trial_result)
-                            save_results()  # trial 처리 후 항상 저장
+                    trial_result = future.result()
+                    with results_lock:
+                        if trial_result:
+                            results_dict[problem_id]["trials"].append(trial_result)
+                        save_results()  # trial 처리 후 항상 저장
 
-                        pbar.update(1)
-            except KeyboardInterrupt:
-                logger.info("Interrupted by user, saving progress...")
-                executor.shutdown(wait=False, cancel_futures=True)
-                save_results()
-                logger.info(f"Progress saved to {output_path}")
-                return
+                    pbar.update(1)
+        except KeyboardInterrupt:
+            logger.info("Interrupted by user, saving progress...")
+            executor.shutdown(wait=False, cancel_futures=True)
+            save_results()
+            logger.info(f"Progress saved to {output_path}")
+            return
 
-        save_results()
-        logger.info(
-            f"Sweep {sweep}/{args.rollout} complete. Results saved to {output_path}"
-        )
-
+    save_results()
     logger.info(f"All trials completed. Results saved to {output_path}")
 
 

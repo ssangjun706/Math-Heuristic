@@ -19,7 +19,7 @@
 
 | Type  | Model                   | Original | Simple | Hard |
 |-------|-------------------------|----------|--------|------|
-| Local | OLMo-3-7B-Base          | ✓        | ✓      | ~    |
+| Local | OLMo-3-7B-Base          | ✓        | ✓      | ✓    |
 | Local | OLMo-3-7B-Think-DPO     | ✓        | ✓      | ✓    |
 | Local | OLMo-3-7B-Think-SFT     | ✓        | ✓      | ✓    |
 | Local | OLMo-3-7B-Think-RLVR    | ✓        | ✓      | ✓    |
@@ -27,6 +27,18 @@
 | Local | Nemotron-Cascade-8B     | ✓        | ✓      | ✓    |
 | Local | Nemotron-Cascade-8B-SFT | ✓        | ✓      | ✓    |
 | Local | Qwen3-8B-Base           | ✓        | ✓      | ✓    |
+
+
+### Rollout (N=64)
+
+| Type  | Model                   | Original | Simple | Hard |
+|-------|-------------------------|----------|--------|------|
+| Local | OLMo-3-7B-Base          | ✗        | ✗      | ✗    |
+| Local | OLMo-3-7B-Think-RLVR    | ✓        | ~      | ~    |
+| Local | OLMo-3-RL-Zero          | ~        | ~      | ~    |
+| Local | Nemotron-Cascade-8B     | ✗        | ✗      | ✗    |
+| Local | Nemotron-Cascade-8B-SFT | ✗        | ✗      | ✗    |
+| Local | Qwen3-8B-Base           | ✗        | ✗      | ✗    |
 
 
 
