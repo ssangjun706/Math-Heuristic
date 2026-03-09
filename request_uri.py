@@ -137,6 +137,7 @@ def process_single_trial(
             url=api_base_url,
             headers=headers,
             data=json.dumps(payload),
+            timeout=600,
         )
 
         if response.status_code != 200:

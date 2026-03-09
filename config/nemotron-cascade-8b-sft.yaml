@@ -1,8 +1,5 @@
-model_name: nvidia/Nemotron-Cascade-8B-Intermediate-ckpts/Nemotron-Cascade-8B-SFT
+model_name: ssangjun706/Nemotron-Cascade-8B-SFT
 local: true
-
-vllm_args:
-  max-model-len: 32768
 
 parameter:
   max_tokens: 16384

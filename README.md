@@ -33,12 +33,12 @@
 
 | Type  | Model                   | Original | Simple | Hard |
 |-------|-------------------------|----------|--------|------|
-| Local | OLMo-3-7B-Base          | ✗        | ✗      | ✗    |
-| Local | OLMo-3-7B-Think-RLVR    | ✓        | ~      | ~    |
-| Local | OLMo-3-RL-Zero          | ~        | ~      | ~    |
+| Local | OLMo-3-7B-Base          | ~        | ~      | ✗    |
+| Local | OLMo-3-7B-Think-RLVR    | ✓        | ✓      | ~    |
+| Local | OLMo-3-RL-Zero          | ✓        | ✓      | ✗    |
 | Local | Nemotron-Cascade-8B     | ✗        | ✗      | ✗    |
-| Local | Nemotron-Cascade-8B-SFT | ✗        | ✗      | ✗    |
-| Local | Qwen3-8B-Base           | ✗        | ✗      | ✗    |
+| Local | Nemotron-Cascade-8B-SFT | ~        | ~      | ~    |
+| Local | Qwen3-8B-Base           | ✓        | ✓      | ✓    |
 
 
 
