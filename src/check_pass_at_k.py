@@ -140,7 +140,7 @@ def main():
     parser.add_argument(
         "--N",
         type=int,
-        default=64,
+        default=17,
         dest="n_trials",
         metavar="N",
         help="Number of trials per problem to use (default: 64). "
@@ -166,10 +166,10 @@ def main():
     if k > n_trials:
         parser.error(f"K ({k}) must be <= N ({n_trials}).")
 
-    base_dir = Path("math-heuristics")
-    # base_dir = Path("output")
-    folders = ["simple", "hard", "original"]
-    # folders = ["simple"]
+    # base_dir = Path("math-heuristics")
+    base_dir = Path("output")
+    # folders = ["simple", "hard", "original"]
+    folders = ["original"]
     expected_count = 115
 
     W = 145

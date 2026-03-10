@@ -12,5 +12,10 @@ wheels/
 .venv
 output/
 .env
-output.zip
+.python-version
+uv.lock
+main.py
+
+# Other files
 math-heuristics
+*.ipynb

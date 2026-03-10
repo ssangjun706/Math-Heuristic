@@ -1,5 +1,3 @@
-"""vLLM server management utilities."""
-
 import atexit
 import subprocess
 import time
@@ -14,20 +12,17 @@ def check_server_health(url: str, timeout: int = 1000) -> bool:
     base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
     health_url = f"{base_url}/health"
 
-    print(f"Waiting for server at {base_url} to be ready...")
     start_time = time.time()
 
     while time.time() - start_time < timeout:
         try:
             response = requests.get(health_url, timeout=2)
             if response.status_code == 200:
-                print(f"Server is ready!")
                 return True
         except requests.exceptions.RequestException:
             pass
         time.sleep(2)
 
-    print(f"Server did not become ready within {timeout} seconds.")
     return False
 
 
@@ -54,13 +49,7 @@ def start_vllm_server(
             if value is not None and value is not True:
                 cmd.append(str(value))
 
-    print(f"Starting vLLM server: {' '.join(cmd)}")
-    process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
+    process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     return process
 
@@ -83,7 +72,6 @@ def setup_local_vllm(
     # Register cleanup function
     def cleanup():
         if vllm_process and vllm_process.poll() is None:
-            print("\nShutting down vLLM server...")
             vllm_process.terminate()
             try:
                 vllm_process.wait(timeout=10)

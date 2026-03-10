@@ -284,12 +284,8 @@ def main():
     logger = logging.getLogger(__name__)
     logger.info(f"Model: {model_name}")
     logger.info(f"Dataset: {dataset_name}")
-    logger.info(f"Output: {output_path}")
     logger.info(f"Rollout: {args.rollout}")
-    logger.info(f"Total problems: {len(problems)}")
     logger.info(f"Completed trials: {already_done} / {total_trials}")
-    logger.info(f"Remaining trials: {total_trials - already_done}")
-    logger.info(f"Using {args.max_workers} parallel workers.")
 
     if already_done >= total_trials:
         logger.info("All trials already completed. Exiting without loading model.")

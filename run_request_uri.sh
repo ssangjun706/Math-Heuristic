@@ -2,32 +2,15 @@
 
 set -e
 
-# module load gcc/15.2.0
-# module load cuda/12.9.1
-
 source .venv/bin/activate
 
-export HF_TOKEN="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"
-export CUDA_VISIBLE_DEVICES="0,1"
-
-MODEL="qwen/qwen3-8b-base"
-# MODEL="nvidia/nemotron-cascade-8b"
-# MODEL="nvidia/nemotron-cascade-8b-sft"
-# MODEL="allenai/olmo-3-7b-think-sft"
-# MODEL="allenai/olmo-3-7b-think-dpo"
-# MODEL="allenai/olmo-3-7b-rl-zero"
-
-# DATASET="simple"
-# DATASET="hard"
-DATASET="original"
-
-# OUTPUT_PATH="./math-heuristics"
+MODEL="allenai/olmo-3-7b-rl-zero"
+DATASET="hard"
 OUTPUT_PATH="./output"
 CONFIG_PATH="./config"
-
-TP_SIZE=2
-PORT=65002
-MAX_WORKERS=20
+TP_SIZE=1
+PORT=35002
+MAX_WORKERS=8
 ROLLOUT=1
 
 python request_uri.py \
@@ -39,4 +22,3 @@ python request_uri.py \
     --port $PORT \
     --max-workers $MAX_WORKERS \
     --rollout $ROLLOUT
-
