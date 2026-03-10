@@ -77,6 +77,16 @@ def load_existing_results(output_path: Path) -> dict[str, dict]:
     return results
 
 
+def get_completed_trial_indices(result: dict, rollout: int) -> set[int]:
+    """Return completed trial indices in [1, rollout] from an existing result item."""
+    completed: set[int] = set()
+    for trial in result.get("trials", []):
+        n = trial.get("n")
+        if isinstance(n, int) and 1 <= n <= rollout:
+            completed.add(n)
+    return completed
+
+
 def extract_reasoning_from_content(content: str) -> tuple[str | None, str]:
     think_pattern = r"<think>(.*?)</think>"
     think_matches = re.findall(think_pattern, content, re.DOTALL)
@@ -137,7 +147,7 @@ def process_single_trial(
             url=api_base_url,
             headers=headers,
             data=json.dumps(payload),
-            timeout=600,
+            timeout=60,
         )
 
         if response.status_code != 200:
@@ -278,7 +288,13 @@ def main():
 
     total_trials = len(problems) * args.rollout
     already_done = sum(
-        len(results_dict[p.get("problem_id")].get("trials", [])) for p in problems
+        len(
+            get_completed_trial_indices(
+                results_dict[p.get("problem_id")],
+                args.rollout,
+            )
+        )
+        for p in problems
     )
 
     logger = logging.getLogger(__name__)
@@ -327,9 +343,10 @@ def main():
     pending_jobs: list[tuple[dict, int]] = []
     for problem in problems:
         problem_id = problem.get("problem_id")
-        done = len(results_dict[problem_id].get("trials", []))
-        for trial_n in range(done + 1, args.rollout + 1):
-            pending_jobs.append((problem, trial_n))
+        completed = get_completed_trial_indices(results_dict[problem_id], args.rollout)
+        for trial_n in range(1, args.rollout + 1):
+            if trial_n not in completed:
+                pending_jobs.append((problem, trial_n))
 
     if not pending_jobs:
         logger.info("All trials already completed. Nothing to do.")

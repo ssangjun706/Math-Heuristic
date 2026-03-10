@@ -164,7 +164,7 @@ parameter:
 | Local | OLMo-3-7B-Base          | ✗        | ✗      | ✗    |
 | Local | OLMo-3-7B-Think-RLVR    | ✓        | ✓      | ✗    |
 | Local | OLMo-3-RL-Zero          | ✓        | ✓      | ✗    |
-| Local | Nemotron-Cascade-8B     | ✓        | ✗      | ✗    |
-| Local | Nemotron-Cascade-8B-SFT | ✗        | ✗      | ✗    |
+| Local | Nemotron-Cascade-8B     | ✓        | ~      | ✗    | (LOCAL)
+| Local | Nemotron-Cascade-8B-SFT | ~        | ~      | ~    | (KISTI)
 | Local | Qwen3-8B-Base           | ✓        | ✓      | ✓    |
-| Local | Qwen3-1.7B-Base         | ~        | ~      | ~    |
+| Local | Qwen3-1.7B-Base         | ✓        | ✓      | ~    | (KISTI)

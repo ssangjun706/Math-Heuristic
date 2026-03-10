@@ -140,7 +140,7 @@ def main():
     parser.add_argument(
         "--N",
         type=int,
-        default=17,
+        default=64,
         dest="n_trials",
         metavar="N",
         help="Number of trials per problem to use (default: 64). "
@@ -168,8 +168,7 @@ def main():
 
     # base_dir = Path("math-heuristics")
     base_dir = Path("output")
-    # folders = ["simple", "hard", "original"]
-    folders = ["original"]
+    folders = ["simple", "hard", "original"]
     expected_count = 115
 
     W = 145
