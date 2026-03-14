@@ -51,6 +51,79 @@ def load_yaml(path: Path) -> dict:
         return yaml.safe_load(file)
 
 
+def _extract_json_array_text(raw_text: str) -> str | None:
+    """Extract JSON array text, preferring the `problems` array if present."""
+    problems_key = '"problems"'
+    key_idx = raw_text.find(problems_key)
+
+    search_start = 0 if key_idx < 0 else key_idx + len(problems_key)
+    array_start = raw_text.find("[", search_start)
+    if array_start < 0:
+        return None
+
+    in_string = False
+    escaped = False
+    depth = 0
+    for idx in range(array_start, len(raw_text)):
+        ch = raw_text[idx]
+
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            continue
+
+        if ch == '"':
+            in_string = True
+            continue
+
+        if ch == "[":
+            depth += 1
+        elif ch == "]":
+            depth -= 1
+            if depth == 0:
+                return raw_text[array_start : idx + 1]
+
+    return raw_text[array_start:]
+
+
+def _recover_problem_objects_from_broken_json(raw_text: str) -> list[dict]:
+    """Recover as many valid problem objects as possible from malformed JSON."""
+    array_text = _extract_json_array_text(raw_text)
+    if not array_text:
+        return []
+
+    if array_text.startswith("["):
+        body = array_text[1:]
+    else:
+        body = array_text
+
+    decoder = json.JSONDecoder()
+    idx = 0
+    recovered: list[dict] = []
+
+    while idx < len(body):
+        while idx < len(body) and body[idx] in " \t\r\n,":
+            idx += 1
+
+        if idx >= len(body) or body[idx] == "]":
+            break
+
+        try:
+            obj, next_idx = decoder.raw_decode(body, idx)
+        except json.JSONDecodeError:
+            break
+
+        idx = next_idx
+        if isinstance(obj, dict) and "problem_id" in obj:
+            recovered.append(obj)
+
+    return recovered
+
+
 def load_existing_results(output_path: Path) -> dict[str, dict]:
     if not output_path.exists():
         return {}
@@ -72,7 +145,19 @@ def load_existing_results(output_path: Path) -> dict[str, dict]:
                 results[problem["problem_id"]] = problem
 
     except (json.JSONDecodeError, FileNotFoundError):
-        pass
+        try:
+            raw_text = output_path.read_text(encoding="utf-8")
+            recovered = _recover_problem_objects_from_broken_json(raw_text)
+            if recovered:
+                logger.warning(
+                    "Recovered %d problems from malformed JSON: %s",
+                    len(recovered),
+                    output_path,
+                )
+                for problem in recovered:
+                    results[problem["problem_id"]] = problem
+        except Exception:
+            pass
 
     return results
 
@@ -147,7 +232,7 @@ def process_single_trial(
             url=api_base_url,
             headers=headers,
             data=json.dumps(payload),
-            timeout=60,
+            # timeout=60,
         )
 
         if response.status_code != 200:

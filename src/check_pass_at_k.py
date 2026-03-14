@@ -166,8 +166,8 @@ def main():
     if k > n_trials:
         parser.error(f"K ({k}) must be <= N ({n_trials}).")
 
-    # base_dir = Path("math-heuristics")
-    base_dir = Path("output")
+    base_dir = Path("math-heuristics")
+    # base_dir = Path("output")
     folders = ["simple", "hard", "original"]
     expected_count = 115
 

@@ -157,14 +157,15 @@ parameter:
 | Local | Nemotron-Cascade-8B-SFT | ✓        | ✓      | ✓    |
 | Local | Qwen3-8B-Base           | ✓        | ✓      | ✓    |
 
+
 ### Rollout (N=64)
 
 | Type  | Model                   | Original | Simple | Hard |
 |-------|-------------------------|----------|--------|------|
-| Local | OLMo-3-7B-Base          | ✗        | ✗      | ✗    |
-| Local | OLMo-3-7B-Think-RLVR    | ✓        | ✓      | ✗    |
-| Local | OLMo-3-RL-Zero          | ✓        | ✓      | ✗    |
-| Local | Nemotron-Cascade-8B     | ✓        | ~      | ✗    | (LOCAL)
-| Local | Nemotron-Cascade-8B-SFT | ~        | ~      | ~    | (KISTI)
-| Local | Qwen3-8B-Base           | ✓        | ✓      | ✓    |
-| Local | Qwen3-1.7B-Base         | ✓        | ✓      | ~    | (KISTI)
+| Local | OLMo-3-7B-Base          | x        | x      | x    | 
+| Local | Nemotron-Cascade-8B-SFT | x        | ✓      | ✓    |
+| Local | Nemotron-Cascade-8B     | ✓        | ✓      | ✓    | ✓
+| Local | OLMo-3-7B-Think-RLVR    | ✓        | ✓      | ✓    | ✓
+| Local | OLMo-3-RL-Zero          | ✓        | ✓      | ✓    | ✓
+| Local | Qwen3-8B-Base           | ✓        | ✓      | ✓    | ✓
+| Local | Qwen3-1.7B-Base         | ✓        | ✓      | ✓    | ✓
