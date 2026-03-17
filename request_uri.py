@@ -310,6 +310,9 @@ def main():
     parser.add_argument("--port", type=int, default=65001)
     parser.add_argument("--max-workers", type=int, default=1)
     parser.add_argument("--rollout", type=int, default=1)
+    parser.add_argument("--repetition-penalty", type=float, default=None)
+    parser.add_argument("--frequency-penalty", type=float, default=None)
+    parser.add_argument("--presence-penalty", type=float, default=None)
     args = parser.parse_args()
 
     load_dotenv()
@@ -328,7 +331,17 @@ def main():
 
     model_config = load_yaml(config_path)
     model_name = model_config["model_name"]
-    model_parameter = model_config.get("parameter", {})
+    model_parameter = dict(model_config.get("parameter", {}))
+
+    # Keep vLLM defaults unless user explicitly provides an override.
+    cli_parameter_overrides = {
+        "repetition_penalty": args.repetition_penalty,
+        "frequency_penalty": args.frequency_penalty,
+        "presence_penalty": args.presence_penalty,
+    }
+    model_parameter.update(
+        {key: value for key, value in cli_parameter_overrides.items() if value is not None}
+    )
 
     is_local = model_config.get("local", False)
     has_chat_template = model_config.get("has_chat_template", True)

@@ -163,7 +163,7 @@ parameter:
 | Type  | Model                   | Original | Simple | Hard |
 |-------|-------------------------|----------|--------|------|
 | Local | OLMo-3-7B-Base          | x        | x      | x    | 
-| Local | Nemotron-Cascade-8B-SFT | x        | ✓      | ✓    |
+| Local | Nemotron-Cascade-8B-SFT | ✓        | ✓      | ✓    | ✓
 | Local | Nemotron-Cascade-8B     | ✓        | ✓      | ✓    | ✓
 | Local | OLMo-3-7B-Think-RLVR    | ✓        | ✓      | ✓    | ✓
 | Local | OLMo-3-RL-Zero          | ✓        | ✓      | ✓    | ✓
