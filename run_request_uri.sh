@@ -20,6 +20,11 @@ MODEL="allenai/olmo-3-7b"
 
 ROLLOUT=64
 DATASET="hard"
+PROMPT_TAG="default"
+# CUSTOM_INSTRUCTION_FILE="./prompt/custom_instruction.txt"
+# CUSTOM_SYSTEM_PROMPT_FILE="./prompt/custom_system.txt"
+# INSTRUCTION_MODE="append"  # append | replace
+
 python request_uri.py \
     --model $MODEL \
     --dataset $DATASET \
@@ -28,4 +33,10 @@ python request_uri.py \
     --tp-size $TP_SIZE \
     --port $PORT \
     --max-workers $MAX_WORKERS \
-    --rollout $ROLLOUT
+    --rollout $ROLLOUT \
+    --prompt-tag $PROMPT_TAG
+
+# Uncomment below for custom prompt experiments:
+#     --custom-instruction-file $CUSTOM_INSTRUCTION_FILE \
+#     --custom-system-prompt-file $CUSTOM_SYSTEM_PROMPT_FILE \
+#     --instruction-mode $INSTRUCTION_MODE

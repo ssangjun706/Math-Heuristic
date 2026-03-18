@@ -8,6 +8,7 @@ Usage:
   python check_accuracy.py
 """
 import json
+import re
 from pathlib import Path
 
 
@@ -60,6 +61,22 @@ def analyze_json_file(file_path):
         return None, None, None, None
 
 
+def parse_model_and_prompt_tag(file_path: Path, folder: str) -> tuple[str, str]:
+    stem = file_path.stem
+    pattern = (
+        rf"^(?P<model>.+?)_math_perturb_{re.escape(folder)}"
+        rf"(?:_prompt-(?P<prompt>.+))?_result$"
+    )
+    match = re.match(pattern, stem)
+    if not match:
+        model_name = stem.replace(f"_math_perturb_{folder}_result", "")
+        return model_name, "default"
+
+    model_name = match.group("model")
+    prompt_tag = match.group("prompt") or "default"
+    return model_name, prompt_tag
+
+
 def main():
     # base_dir = Path("math-heuristics")
     base_dir = Path("output")
@@ -91,7 +108,9 @@ def main():
 
         print(f"\n📁 {folder.upper()}")
         print("─" * W)
-        print(f"{'Model':<50} {'Status':<8} {'Total':<8} {'Valid':<8} {'Accuracy':>9}")
+        print(
+            f"{'Model':<42} {'PromptTag':<20} {'Status':<8} {'Total':<8} {'Valid':<8} {'Accuracy':>9}"
+        )
         print("─" * W)
 
         for json_file in json_files:
@@ -102,20 +121,24 @@ def main():
                 continue
 
             object_count, valid_count, problems_no_trial, accuracy = result
-            model_name = json_file.stem.replace(f"_math_perturb_{folder}_result", "")
+            model_name, prompt_tag = parse_model_and_prompt_tag(json_file, folder)
 
             status = "✅" if valid_count == expected_count else "❌"
             status_str = status + (" ⚠️" if problems_no_trial else "")
 
             print(
-                f"{model_name:<50} {status_str:<8} {object_count:<8} {valid_count:<8} "
+                f"{model_name:<42} {prompt_tag:<20} {status_str:<8} {object_count:<8} {valid_count:<8} "
                 f"{accuracy:>8.2f}%"
             )
 
             if valid_count != expected_count:
-                files_with_issues.append((folder, model_name, object_count, valid_count))
+                files_with_issues.append(
+                    (folder, model_name, prompt_tag, object_count, valid_count)
+                )
             if problems_no_trial:
-                files_with_no_trial.append((folder, model_name, problems_no_trial))
+                files_with_no_trial.append(
+                    (folder, model_name, prompt_tag, problems_no_trial)
+                )
 
     # Summary
     print("\n" + "=" * W)
@@ -132,17 +155,19 @@ def main():
     if files_with_issues:
         print()
         print("⚠️  FILES WITH INCORRECT VALID PROBLEM COUNT:")
-        for folder, model_name, total_obj, valid in files_with_issues:
+        for folder, model_name, prompt_tag, total_obj, valid in files_with_issues:
             diff = valid - expected_count
             print(
-                f"  - {folder}/{model_name}: {valid} valid / {total_obj} total ({diff:+d})"
+                f"  - {folder}/{model_name} [prompt={prompt_tag}]: {valid} valid / {total_obj} total ({diff:+d})"
             )
 
     if files_with_no_trial:
         print()
         print("⚠️  FILES WITH PROBLEMS MISSING ALL TRIALS:")
-        for folder, model_name, problem_ids in files_with_no_trial:
-            print(f"  - {folder}/{model_name}: {len(problem_ids)} problems without any trial")
+        for folder, model_name, prompt_tag, problem_ids in files_with_no_trial:
+            print(
+                f"  - {folder}/{model_name} [prompt={prompt_tag}]: {len(problem_ids)} problems without any trial"
+            )
             shown = problem_ids[:5]
             rest = len(problem_ids) - len(shown)
             suffix = f" ... (and {rest} more)" if rest > 0 else ""

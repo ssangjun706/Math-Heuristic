@@ -18,6 +18,7 @@ Options:
 import argparse
 import json
 import math
+import re
 from pathlib import Path
 
 
@@ -128,6 +129,22 @@ def analyze_json_file(file_path, n_trials: int, k: int):
         return (None,) * 7
 
 
+def parse_model_and_prompt_tag(file_path: Path, folder: str) -> tuple[str, str]:
+    stem = file_path.stem
+    pattern = (
+        rf"^(?P<model>.+?)_math_perturb_{re.escape(folder)}"
+        rf"(?:_prompt-(?P<prompt>.+))?_result$"
+    )
+    match = re.match(pattern, stem)
+    if not match:
+        model_name = stem.replace(f"_math_perturb_{folder}_result", "")
+        return model_name, "default"
+
+    model_name = match.group("model")
+    prompt_tag = match.group("prompt") or "default"
+    return model_name, prompt_tag
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -202,7 +219,7 @@ def main():
         print(f"\n📁 {folder.upper()}")
         print("─" * W)
         header = (
-            f"{'Model':<50} {'Status':<8} {'Total':<7} {'Valid':<7} "
+            f"{'Model':<40} {'PromptTag':<18} {'Status':<8} {'Total':<7} {'Valid':<7} "
             f"{'TrialsUsed':<12} {'AvgCorr':>8} {'P@1':>7} {f'P@{k}':>9}"
         )
         print(header)
@@ -225,23 +242,23 @@ def main():
                 pass_at_k,
             ) = result
 
-            model_name = json_file.stem.replace(f"_math_perturb_{folder}_result", "")
+            model_name, prompt_tag = parse_model_and_prompt_tag(json_file, folder)
             status = "✅" if valid_count == expected_count else "❌"
             status_str = status + (" ⚠️" if insufficient_trial_ids else "")
 
             print(
-                f"{model_name:<50} {status_str:<8} {object_count:<7} {valid_count:<7} "
+                f"{model_name:<40} {prompt_tag:<18} {status_str:<8} {object_count:<7} {valid_count:<7} "
                 f"{total_trials_used:<12} {avg_correct_rate:>7.2f}% {pass_at_1:>6.2f}% "
                 f"{pass_at_k:>8.2f}%"
             )
 
             if valid_count != expected_count:
                 files_with_issues.append(
-                    (folder, model_name, object_count, valid_count)
+                    (folder, model_name, prompt_tag, object_count, valid_count)
                 )
             if insufficient_trial_ids:
                 files_with_insufficient.append(
-                    (folder, model_name, insufficient_trial_ids)
+                    (folder, model_name, prompt_tag, insufficient_trial_ids)
                 )
 
     # Summary
@@ -261,18 +278,18 @@ def main():
     if files_with_issues:
         print()
         print("⚠️  FILES WITH INCORRECT VALID PROBLEM COUNT:")
-        for folder, model_name, total_obj, valid in files_with_issues:
+        for folder, model_name, prompt_tag, total_obj, valid in files_with_issues:
             diff = valid - expected_count
             print(
-                f"  - {folder}/{model_name}: {valid} valid / {total_obj} total ({diff:+d})"
+                f"  - {folder}/{model_name} [prompt={prompt_tag}]: {valid} valid / {total_obj} total ({diff:+d})"
             )
 
     if files_with_insufficient:
         print()
         print(f"⚠️  FILES WITH PROBLEMS HAVING < {n_trials} TRIAL(S):")
-        for folder, model_name, problem_ids in files_with_insufficient:
+        for folder, model_name, prompt_tag, problem_ids in files_with_insufficient:
             print(
-                f"  - {folder}/{model_name}: {len(problem_ids)} problems with insufficient trials"
+                f"  - {folder}/{model_name} [prompt={prompt_tag}]: {len(problem_ids)} problems with insufficient trials"
             )
             shown = problem_ids[:5]
             rest = len(problem_ids) - len(shown)

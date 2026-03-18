@@ -55,8 +55,9 @@ class PromptFormatter:
         ]
 
     def format_claude(self, problem: str) -> list[dict]:
-        # system_prompt = self._load_system_prompt("CLAUDE_SONNET_4.5")
-        content = f"{problem}\n"
+        heuristic_prompt = self._load_system_prompt("HEURISTIC_INST")
+        content = heuristic_prompt + "\n\n"
+        content += f"Q. {problem}\n"
         content += (
             "Please reason step by step, and put your final answer within \boxed{}."
         )

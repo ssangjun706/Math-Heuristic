@@ -79,6 +79,12 @@ python request_uri.py \
 - `--port`: 로컬 vLLM 포트
 - `--max-workers`: 동시 요청 스레드 수
 - `--rollout`: 문제당 trial 개수
+- `--prompt-tag`: 프롬프트 실험 태그(default: `default`). 커스텀 실험 결과 파일명 분리에 사용
+- `--custom-instruction-file`: 사용자 지시문 텍스트 파일 경로(optional)
+- `--custom-system-prompt-file`: 시스템 프롬프트 텍스트 파일 경로(optional)
+- `--instruction-mode`: `append | replace` (default: `append`)
+	- `append`: 기본 지시문 + 커스텀 지시문
+	- `replace`: 기본 지시문 대신 커스텀 지시문 사용
 
 ## Model Config (`config/*.yaml`)
 
@@ -107,6 +113,12 @@ parameter:
 기본 출력 경로:
 - `output/{dataset}/{model_name}_math_perturb_{dataset}_result.json`
 
+커스텀 프롬프트 실험 시(또는 `--prompt-tag`가 default가 아닐 때):
+- `output/{dataset}/{model_name}_math_perturb_{dataset}_prompt-{prompt_tag}_result.json`
+
+예시:
+- `output/hard/olmo-3-7b_math_perturb_hard_prompt-cot-v2_result.json`
+
 파일 구조(요약):
 
 ```json
@@ -128,6 +140,12 @@ parameter:
 	}
 ]
 ```
+
+추적을 위해 각 problem object에 다음 메타데이터가 추가됩니다.
+- `prompt_tag`
+- `instruction_mode`
+- `custom_instruction_file`
+- `custom_system_prompt_file`
 
 
 ## Rollout Progress
@@ -162,7 +180,7 @@ parameter:
 
 | Type  | Model                   | Original | Simple | Hard |
 |-------|-------------------------|----------|--------|------|
-| Local | OLMo-3-7B-Base          | x        | x      | x    | 
+| Local | OLMo-3-7B-Base          | ✓        | x      | ✓    | 
 | Local | Nemotron-Cascade-8B-SFT | ✓        | ✓      | ✓    | ✓
 | Local | Nemotron-Cascade-8B     | ✓        | ✓      | ✓    | ✓
 | Local | OLMo-3-7B-Think-RLVR    | ✓        | ✓      | ✓    | ✓
