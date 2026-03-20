@@ -78,7 +78,7 @@ def parse_model_and_prompt_tag(file_path: Path, folder: str) -> tuple[str, str]:
 
 
 def main():
-    # base_dir = Path("math-heuristics")
+    base_dir = Path("math-heuristics")
     base_dir = Path("output")
     folders = ["simple", "hard", "original"]
     expected_count = 115

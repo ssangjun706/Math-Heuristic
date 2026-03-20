@@ -67,7 +67,8 @@ class PromptFormatter:
         ]
 
     def format_nemotron(self, problem: str) -> list[dict]:
-        system_prompt = self._load_system_prompt("NEMOTRON_CASCADE")
+        # system_prompt = self._load_system_prompt("NEMOTRON_CASCADE")
+        system_prompt = self._load_system_prompt("HEURISTIC_INST")
         content = f"{problem}\n"
         content += (
             "Please reason step by step, and put your final answer within \boxed{}."
